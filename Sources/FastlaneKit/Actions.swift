@@ -1,7 +1,11 @@
 import Foundation
+import Command
 
-public extension Lanefile {
-    func println(message: String) {
-        print(message)
+public func println(message: String) async throws {
+    let arguments = ["fastlane", "run", "println", "message:\(message)"]
+    
+    let commandRunner = CommandRunner()
+    for try await event in commandRunner.run(arguments: arguments) {
+        print(event.string() ?? "")
     }
 }
