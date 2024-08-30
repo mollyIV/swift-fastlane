@@ -18,18 +18,18 @@ cat <<EOF > $FASTLANE_SWIFT_DIR/Package.swift
 import PackageDescription
 
 let package = Package(
-  name: "fastlane-swift",
-  platforms: [.macOS(.v10_15)],
+  name: "fastlane",
+  platforms: [.macOS(.v13)],
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
-    .package(url: "https://github.com/fastlane/fastlane", from: "2.223.0"),
+    .package(url: "https://github.com/fastlane/swift-fastlane", branch: "main"),
   ],
   targets: [
     .executableTarget(
-      name: "fastlane-swift",
+      name: "fastlane",
       dependencies: [
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
-        .product(name: "Fastlane", package: "fastlane"),
+        .product(name: "FastlaneKit", package: "swift-fastlane"),
       ]
     )
   ]
@@ -39,43 +39,26 @@ EOF
 # Sources directory
 mkdir -p $FASTLANE_SWIFT_DIR/Sources
 
-touch $FASTLANE_SWIFT_DIR/Sources/Runner.swift
-cat <<EOF > $FASTLANE_SWIFT_DIR/Sources/Runner.swift
-import ArgumentParser
-import Fastlane
+touch $FASTLANE_SWIFT_DIR/Sources/main.swift
+cat <<EOF > $FASTLANE_SWIFT_DIR/Sources/main.swift
+import FastlaneKit
 
-@main
-struct Fastlane: ParsableCommand {
-  static let configuration = CommandConfiguration(
-    abstract: "Peforming fastlane operations.",
-    subcommands: [Lane.self]
-  )
-}
-
-extension Fastlane {
-    struct Lane: ParsableCommand {
-        static let configuration = CommandConfiguration(abstract: "Runs the given lane.")
-
-        @Argument(help: "The name of a lane to execute.")
-        var name: String
-
-        @Argument(help: "The parameters.")
-        var params: [String] = []
-
-        mutating func run() throws {
-            Main().run(with: FastFile())
-        }
-    }
-}
+try await FastlaneCommand.run()
 EOF
 
-touch $FASTLANE_SWIFT_DIR/Sources/Fastfile.swift
-cat <<EOF > $FASTLANE_SWIFT_DIR/Sources/Fastfile.swift
-import Fastlane
+touch $FASTLANE_SWIFT_DIR/Sources/Lanes.swift
+cat <<EOF > $FASTLANE_SWIFT_DIR/Sources/Lanes.swift
+import ArgumentParser
+import FastlaneKit
 
-class FastFile: LaneFile {
-    func foobarLane() {
-        println(message: "Hello, World!")
+@Lane
+struct HelloWorld: AsyncParsableCommand {
+    public static let configuration = CommandConfiguration(
+        commandName: "hello-world"
+    )
+    
+    func run() async throws {
+        try await println(message: "Hello, World!")
     }
 }
 EOF
